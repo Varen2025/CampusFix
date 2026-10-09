@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "CampusFix.sln",
+    "projects": [
+      "src\\CampusFix.Contracts\\CampusFix.Contracts.csproj",
+      "src\\CampusFix.Api\\CampusFix.Api.csproj",
+      "src\\CampusFix.Web\\CampusFix.Web.csproj",
+      "tests\\CampusFix.Api.Tests\\CampusFix.Api.Tests.csproj"
+    ]
+  }
+}

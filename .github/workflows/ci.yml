@@ -1,0 +1,169 @@
+name: CampusFix CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: campusfix-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and test with PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: campusfix_tests
+          POSTGRES_USER: campusfix
+          # Disposable CI database only; never reuse this value for hosting.
+          POSTGRES_PASSWORD: ci-only-postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U campusfix -d campusfix_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TEST_POSTGRES_CONNECTION: Host=localhost;Port=5432;Database=campusfix_tests;Username=campusfix;Password=ci-only-postgres
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore CampusFix.App.slnf
+      - name: Build
+        run: dotnet build CampusFix.App.slnf --configuration Release --no-restore
+      - name: Test
+        run: dotnet test CampusFix.App.slnf --configuration Release --no-build --logger trx --results-directory TestResults
+      - name: Keep test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+
+  source-security:
+    name: Source and dependency security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore dependency manifests for scanning
+        run: dotnet restore CampusFix.App.slnf
+      - name: Scan dependencies, secrets and configuration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+
+  containers:
+    name: Build, scan and start containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # These values are for this disposable runner, not deployed credentials.
+      POSTGRES_PASSWORD: ci-only-compose-postgres
+      JWT_KEY: ci-only-signing-key-32-characters-minimum-never-deploy
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Build both application images
+        run: docker compose build --pull
+      - name: Scan API image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: campusfix-api:local
+          scanners: vuln,secret
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+      - name: Scan web image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: campusfix-web:local
+          scanners: vuln,secret
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: '1'
+          skip-setup-trivy: true
+      - name: Start the three services
+        run: docker compose up --detach --no-build
+      - name: Wait for the API and web app
+        shell: bash
+        run: |
+          set -euo pipefail
+          for url in http://127.0.0.1:5081/health http://127.0.0.1:5080/health; do
+            ready=false
+            for attempt in {1..30}; do
+              if curl --fail --silent --output /dev/null "$url"; then
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ready" != true ]; then
+              echo "Service did not become healthy: $url"
+              exit 1
+            fi
+          done
+      - name: Show container diagnostics on failure
+        if: failure()
+        run: docker compose logs --no-color --tail 150
+      - name: Stop disposable CI containers
+        if: always()
+        run: docker compose down --volumes
+
+  deploy:
+    name: Optional Render deployment hooks
+    needs: [build-test, source-security, containers]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+      WEB_DEPLOY_HOOK: ${{ secrets.RENDER_WEB_DEPLOY_HOOK }}
+    steps:
+      - name: Check whether deployment is configured
+        id: configured
+        shell: bash
+        run: |
+          if [ -n "$API_DEPLOY_HOOK" ] && [ -n "$WEB_DEPLOY_HOOK" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "### Not deployed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Both Render deploy-hook secrets are required. CI passing does not mean the app is live." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Request deployments of this tested commit
+        if: steps.configured.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --output /dev/null --get --data-urlencode "ref=$GITHUB_SHA" "$API_DEPLOY_HOOK"
+          curl --fail --silent --show-error --output /dev/null --get --data-urlencode "ref=$GITHUB_SHA" "$WEB_DEPLOY_HOOK"
+          echo "### Deployment requested" >> "$GITHUB_STEP_SUMMARY"
+          echo "Both hooks accepted the request. Check Render for successful completion, then test the live URLs." >> "$GITHUB_STEP_SUMMARY"

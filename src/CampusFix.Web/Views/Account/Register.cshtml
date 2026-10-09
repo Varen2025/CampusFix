@@ -1,0 +1,19 @@
+@model RegisterRequest
+@{
+    ViewData["Title"] = "Create an account";
+}
+<section class="auth-layout">
+    <div class="auth-intro"><p class="eyebrow">LET’S MAKE CAMPUS BETTER</p><h1>Your voice.<br />A better <em>space.</em></h1><p>Create your student account to report a maintenance issue and follow its progress.</p><a class="text-link" asp-controller="Home" asp-action="Index">← Back to CampusFix</a></div>
+    <div class="panel auth-panel">
+        <span class="eyebrow">START HERE</span><h2>Create an account</h2><p class="muted">A small step toward a better campus.</p>
+        <form asp-action="Register" method="post">
+            <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+            <div class="field"><label asp-for="FullName">Full name</label><input asp-for="FullName" autocomplete="name" minlength="2" maxlength="80" required /></div>
+            <div class="field"><label asp-for="Email">Email address</label><input asp-for="Email" type="email" autocomplete="username" maxlength="254" required /></div>
+            <div class="field"><label asp-for="Password">Password</label><input asp-for="Password" type="password" autocomplete="new-password" aria-describedby="password-hint" minlength="12" maxlength="128" required /><p class="field-hint" id="password-hint">Use at least 12 characters. A few unrelated words make a memorable password.</p></div>
+            <button type="submit" class="button button-full">Create student account <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch">Already registered? <a asp-action="Login">Sign in</a></p>
+        <p class="fine-print">Staff accounts are set up by the project administrator.</p>
+    </div>
+</section>

@@ -1,0 +1,42 @@
+@model ReportListViewModel
+@{
+    ViewData["Title"] = User.IsInRole("Staff") ? "Maintenance dashboard" : "My reports";
+    var staff = User.IsInRole("Staff");
+    var hasFilters = !string.IsNullOrEmpty(Model.Status) || !string.IsNullOrEmpty(Model.Query);
+}
+<section class="page-heading">
+    <div><p class="eyebrow">@(staff ? "MAINTENANCE DESK" : "YOUR CAMPUSFIX DASHBOARD")</p><h1>@(staff ? "Keep campus moving." : "Your reports. Real progress.")</h1><p class="muted">Hello, @User.Identity?.Name. @(staff ? "Review reported issues and keep everyone informed." : "Everything you have reported, together in one place.")</p></div>
+    @if (!staff)
+    {
+        <a class="button" asp-action="Create"><span aria-hidden="true">＋</span> Report an issue</a>
+    }
+</section>
+<section class="stats-grid" aria-label="Report totals in the current view">
+    <div class="stat-card stat-total"><span>@(hasFilters ? "Matching reports" : "Reports in this view")</span><strong>@Model.Reports.Count</strong><span class="stat-caption">@(staff ? "Campus maintenance" : "Submitted by you")</span></div>
+    <div class="stat-card"><span><i class="status-dot dot-open"></i> Open</span><strong>@Model.Reports.Count(r => r.Status == "Open")</strong><span class="stat-caption">Awaiting attention</span></div>
+    <div class="stat-card"><span><i class="status-dot dot-progress"></i> In progress</span><strong>@Model.Reports.Count(r => r.Status == "InProgress")</strong><span class="stat-caption">Work is underway</span></div>
+    <div class="stat-card"><span><i class="status-dot dot-resolved"></i> Resolved</span><strong>@Model.Reports.Count(r => r.Status == "Resolved")</strong><span class="stat-caption">Marked as fixed</span></div>
+</section>
+<section class="panel reports-panel" aria-labelledby="reports-heading">
+    <div class="panel-heading"><div><h2 id="reports-heading">@(staff ? "Maintenance reports" : "My reports")</h2><p class="muted">@(hasFilters ? "Results for your current search and status filter." : "Most recent reports first.")</p></div><span class="count-label">@Model.Reports.Count @(Model.Reports.Count == 1 ? "report" : "reports")</span></div>
+    <form asp-action="Index" method="get" class="filter-bar">
+        <div class="field search-field"><label for="q">Search reports</label><input id="q" name="q" type="search" value="@Model.Query" maxlength="100" placeholder="Search title or location" /></div>
+        <div class="field filter-status"><label for="status">Status</label><select id="status" name="status"><option value="">All statuses</option>@foreach (var status in ReportOptions.Statuses) { <option value="@status" selected="@(Model.Status == status)">@ReportOptions.StatusLabel(status)</option> }</select></div>
+        <button class="button button-secondary" type="submit">Apply filters</button>
+        @if (hasFilters) { <a class="text-link clear-filter" asp-action="Index">Clear</a> }
+    </form>
+    @if (Model.Reports.Count == 0)
+    {
+        <div class="empty-state"><span class="empty-icon" aria-hidden="true">@(hasFilters ? "⌕" : "+")</span><h3>@(hasFilters ? "No matching reports" : "A clear view starts here")</h3><p>@(hasFilters ? "Try another search or clear your filters to see more reports." : staff ? "Incoming student reports will appear here, ready for your team to review." : "Spotted something that needs attention? Submit your first issue and follow its progress here.")</p>@if (hasFilters) { <a class="button button-secondary" asp-action="Index">Clear filters</a> } else if (!staff) { <a class="button button-secondary" asp-action="Create">Report an issue <span aria-hidden="true">↗</span></a> }</div>
+    }
+    else
+    {
+        <div class="table-scroll"><table class="reports-table"><caption class="visually-hidden">@(staff ? "All campus" : "Your") maintenance reports</caption><thead><tr><th scope="col">Issue</th><th scope="col">Location</th><th scope="col">Status</th><th scope="col">Reported</th><th scope="col"><span class="visually-hidden">View report</span></th></tr></thead><tbody>
+        @foreach (var report in Model.Reports)
+        {
+            <tr><td><a class="report-title" asp-action="Details" asp-route-id="@report.Id">@report.Title</a><span class="table-subtext">@report.Category</span></td><td>@report.Location</td><td><span class="status-badge status-@report.Status">@ReportOptions.StatusLabel(report.Status)</span></td><td><time datetime="@report.CreatedAt.ToString("O")">@report.CreatedAt.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM yyyy")</time></td><td><a class="table-arrow" asp-action="Details" asp-route-id="@report.Id" aria-label="View report: @report.Title">↗</a></td></tr>
+        }
+        </tbody></table></div>
+        @if (Model.Reports.Count >= 200) { <p class="table-limit">Showing the 200 most recent matches. Search or filter to narrow the results.</p> }
+    }
+</section>

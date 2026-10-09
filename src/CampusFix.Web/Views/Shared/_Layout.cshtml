@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#143c31" />
+    <meta name="description" content="Report campus maintenance issues and follow their progress with CampusFix." />
+    <title>@ViewData["Title"] · CampusFix</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="container nav-shell">
+            <a class="brand" asp-controller="Home" asp-action="Index" aria-label="CampusFix home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Campus<span>Fix</span><span class="brand-dot">.</span></a>
+            <nav aria-label="Main navigation">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="nav-link" asp-controller="Reports" asp-action="Index">@(User.IsInRole("Staff") ? "All reports" : "My reports")</a>
+                    <span class="role-chip">@(User.IsInRole("Staff") ? "Staff" : "Student")</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post"><button class="nav-link nav-button" type="submit">Sign out</button></form>
+                }
+                else
+                {
+                    <a class="nav-link" asp-controller="Account" asp-action="Login">Sign in</a>
+                    <a class="button button-small" asp-controller="Account" asp-action="Register">Get started <span aria-hidden="true">↗</span></a>
+                }
+            </nav>
+        </div>
+    </header>
+    <main id="main" class="container main-content">
+        @if (TempData["Success"] is string success)
+        {
+            <div class="notice notice-success" role="status"><span aria-hidden="true">✓</span> @success</div>
+        }
+        @RenderBody()
+    </main>
+    <footer class="site-footer"><div class="container footer-inner"><p><strong>CampusFix.</strong> Small reports. Better spaces.</p><p>CLDV6212 student project · @DateTime.UtcNow.Year</p></div></footer>
+</body>
+</html>

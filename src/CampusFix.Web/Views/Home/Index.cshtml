@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "A better campus starts here";
+}
+<section class="landing-hero">
+    <div class="hero-copy">
+        <p class="eyebrow"><span class="small-dot"></span> YOUR CAMPUS. OUR SHARED SPACE.</p>
+        <h1>A better campus<br />starts with<br /><em>one report.</em></h1>
+        <p class="hero-description">A flickering light. A leaking tap. A broken desk. Help the maintenance team spot the problem and keep track of what happens next.</p>
+        <div class="button-row"><a class="button" asp-controller="Account" asp-action="Register">Report your first issue <span aria-hidden="true">↗</span></a><a class="text-link" asp-controller="Account" asp-action="Login">Already have an account? <span aria-hidden="true">→</span></a></div>
+        <p class="hero-note">One place to report issues. A clear view of progress.</p>
+    </div>
+    <div class="journey-card" aria-labelledby="journey-title">
+        <div class="journey-top"><span class="eyebrow">FROM NOTICE TO ACTION</span><span class="journey-symbol" aria-hidden="true">↗</span></div>
+        <h2 id="journey-title">Every fix<br />starts here.</h2>
+        <ol class="journey">
+            <li><span class="step-number">01</span><div><h3>Spot &amp; report</h3><p>Tell us what is wrong and where to find it.</p></div></li>
+            <li><span class="step-number">02</span><div><h3>Let the team take over</h3><p>Staff review your report and update its status.</p></div></li>
+            <li><span class="step-number">03</span><div><h3>Follow the fix</h3><p>Check back to see when the issue is resolved.</p></div></li>
+        </ol>
+        <div class="journey-footer"><span class="status-badge status-Open">Open</span><span aria-hidden="true">→</span><span class="status-badge status-InProgress">In progress</span><span aria-hidden="true">→</span><span class="status-badge status-Resolved">Resolved</span></div>
+    </div>
+</section>
+<section class="value-strip" aria-label="What CampusFix does">
+    <div><span class="eyebrow">01 / SIMPLE TO REPORT</span><h2>A few details go a long way.</h2><p>Add the location, category and a short description of the issue.</p></div>
+    <div><span class="eyebrow">02 / EASY TO FOLLOW</span><h2>No more wondering what happened.</h2><p>Your reports stay together, with a status you can check at any time.</p></div>
+    <div><span class="eyebrow">03 / READY FOR THE TEAM</span><h2>One shared maintenance view.</h2><p>Staff can search incoming reports and record progress toward a fix.</p></div>
+</section>
+<p class="safety-note">For an immediate safety risk, contact campus security or the facilities team directly. CampusFix is for routine maintenance reporting.</p>

@@ -1,0 +1,67 @@
+name: campusfix
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: campusfix
+      POSTGRES_USER: campusfix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusfix -d campusfix"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - campusfix
+    restart: unless-stopped
+
+  api:
+    image: campusfix-api:local
+    build:
+      context: .
+      dockerfile: src/CampusFix.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      DbProvider: Postgres
+      ConnectionStrings__CampusFix: Host=db;Port=5432;Database=campusfix;Username=campusfix;Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      Jwt__Key: ${JWT_KEY:?Set JWT_KEY to at least 32 random characters in .env}
+      Jwt__Issuer: CampusFix
+      Jwt__Audience: CampusFix
+      Seed__StaffEmail: ${SEED_STAFF_EMAIL:-}
+      Seed__StaffPassword: ${SEED_STAFF_PASSWORD:-}
+    ports:
+      - "127.0.0.1:5081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - campusfix
+    restart: unless-stopped
+
+  web:
+    image: campusfix-web:local
+    build:
+      context: .
+      dockerfile: src/CampusFix.Web/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      Api__BaseUrl: http://api:8080/
+      Cookies__RequireSecure: "false"
+    ports:
+      - "127.0.0.1:5080:8080"
+    depends_on:
+      - api
+    networks:
+      - campusfix
+    restart: unless-stopped
+
+networks:
+  campusfix:
+
+volumes:
+  postgres_db:

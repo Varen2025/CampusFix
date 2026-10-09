@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: nuget
+    directories:
+      - /src/CampusFix.Api
+      - /src/CampusFix.Web
+      - /src/CampusFix.Contracts
+      - /tests/CampusFix.Api.Tests
+    schedule:
+      interval: weekly

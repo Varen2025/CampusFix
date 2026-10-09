@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "CampusFix in Docker": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchServiceName": "web",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchUrl": "http://localhost:5080",
+      "serviceActions": {
+        "db": "StartWithoutDebugging",
+        "api": "StartDebugging",
+        "web": "StartDebugging"
+      }
+    }
+  }
+}

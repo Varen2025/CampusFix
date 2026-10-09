@@ -1,0 +1,17 @@
+@model CreateReportRequest
+@{
+    ViewData["Title"] = "Report an issue";
+}
+<a class="back-link" asp-action="Index">← Back to my reports</a>
+<section class="page-heading"><div><p class="eyebrow">LET’S GET IT SORTED</p><h1>What needs attention?</h1><p class="muted">A few clear details help the maintenance team find and fix the issue.</p></div></section>
+<div class="form-layout">
+    <form asp-action="Create" method="post" class="panel report-form">
+        <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+        <p class="required-note">All fields are required.</p>
+        <div class="field"><label asp-for="Title">Issue title</label><input asp-for="Title" placeholder="e.g. Flickering light in the study room" minlength="5" maxlength="100" required /><span asp-validation-for="Title" class="field-error"></span></div>
+        <div class="field-row"><div class="field"><label asp-for="Location">Location</label><input asp-for="Location" placeholder="e.g. Block B, room 204" minlength="3" maxlength="120" required /><span asp-validation-for="Location" class="field-error"></span></div><div class="field"><label asp-for="Category">Category</label><select asp-for="Category" required>@foreach (var category in ReportOptions.Categories) { <option value="@category">@category</option> }</select><span asp-validation-for="Category" class="field-error"></span></div></div>
+        <div class="field"><label asp-for="Description">Describe the issue</label><textarea asp-for="Description" rows="6" placeholder="What is wrong? When did you notice it? Include details that will help the team." minlength="10" maxlength="2000" aria-describedby="description-hint" required></textarea><p class="field-hint" id="description-hint">10–2,000 characters. Keep personal or sensitive information out of your report.</p><span asp-validation-for="Description" class="field-error"></span></div>
+        <div class="form-actions"><button class="button" type="submit">Submit report <span aria-hidden="true">↗</span></button><a class="text-link" asp-action="Index">Cancel</a></div>
+    </form>
+    <aside class="guidance-card"><span class="eyebrow">A GOOD REPORT HELPS</span><h2>Make it easy<br />to find the fix.</h2><ul class="guidance-list"><li><strong>Be specific about the location.</strong>Include the building, room or nearest landmark.</li><li><strong>Describe what you can see.</strong>Clear observations help staff understand the issue.</li><li><strong>Check back for progress.</strong>Your report starts as Open. Staff update it as work moves forward.</li></ul><p class="safety-note">Immediate safety risk? Contact campus security or the facilities team directly.</p></aside>
+</div>

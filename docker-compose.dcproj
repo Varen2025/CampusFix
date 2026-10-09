@@ -1,0 +1,29 @@
+<Project ToolsVersion="15.0" Sdk="Microsoft.Docker.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectVersion>2.1</ProjectVersion>
+    <DockerTargetOS>Linux</DockerTargetOS>
+    <ProjectGuid>39925ff7-cc09-4541-920a-c10109dd3f6b</ProjectGuid>
+    <DockerDevelopmentMode>Regular</DockerDevelopmentMode>
+    <DependencyAwareStart>true</DependencyAwareStart>
+    <DockerComposeProjectName>campusfix</DockerComposeProjectName>
+    <DockerComposeEnvFilePath>.env</DockerComposeEnvFilePath>
+    <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+    <DockerServiceName>web</DockerServiceName>
+    <DockerServiceUrl>http://localhost:5080</DockerServiceUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="docker-compose.yml" />
+    <None Include=".dockerignore" />
+    <None Include=".env.example" />
+  </ItemGroup>
+  <Target Name="EnsureCampusFixDockerSettings"
+          BeforeTargets="DockerCheckProjectVersion;DockerResolveTargetOS;DockerGetServiceReferences"
+          Condition="'$(OS)' == 'Windows_NT' and !Exists('$(MSBuildProjectDirectory)\.env')">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\scripts\Setup-Docker.ps1&quot; -Quiet" />
+  </Target>
+  <Target Name="StopRecordedCampusFixLocalServices"
+          BeforeTargets="DockerPrepareForBuild"
+          Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and Exists('$(MSBuildProjectDirectory)\.local\processes.json')">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\scripts\Stop-Local.ps1&quot;" />
+  </Target>
+</Project>

@@ -1,0 +1,18 @@
+@model ReportResponse
+@{
+    ViewData["Title"] = Model.Title;
+    var stage = Array.IndexOf(ReportOptions.Statuses, Model.Status);
+}
+<a class="back-link" asp-action="Index">← Back to reports</a>
+<section class="page-heading detail-heading"><div><p class="eyebrow">REPORT / @Model.Id.ToString()[..8].ToUpperInvariant()</p><h1>@Model.Title</h1><p class="muted">Submitted @Model.CreatedAt.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM yyyy 'at' HH:mm") SAST</p></div><span class="status-badge status-large status-@Model.Status">@ReportOptions.StatusLabel(Model.Status)</span></section>
+<div class="detail-layout">
+    <article class="panel detail-panel"><div class="detail-meta"><div><span class="eyebrow">LOCATION</span><p>@Model.Location</p></div><div><span class="eyebrow">CATEGORY</span><p>@Model.Category</p></div><div><span class="eyebrow">REPORTED BY</span><p>@Model.ReporterName</p></div></div><div class="detail-description"><h2>About this issue</h2><p>@Model.Description</p></div></article>
+    <aside class="panel progress-panel"><span class="eyebrow">FOLLOW THE FIX</span><h2>Report progress</h2><ol class="progress-steps">@for (var i = 0; i < ReportOptions.Statuses.Length; i++) { <li class="@(i <= stage ? "step-reached" : "")" aria-current="@(i == stage ? "step" : null)"><span class="progress-circle" aria-hidden="true">@(i < stage ? "✓" : (i + 1).ToString())</span><div><strong>@ReportOptions.StatusLabel(ReportOptions.Statuses[i])</strong><p>@(i == 0 ? "Submitted for attention" : i == 1 ? "Work is underway" : "Marked as fixed")</p></div></li> }</ol>
+        @if (Model.UpdatedAt is not null) { <p class="fine-print">Last updated @Model.UpdatedAt.Value.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM yyyy, HH:mm") SAST.</p> }
+        @if (User.IsInRole("Staff"))
+        {
+            <form asp-action="UpdateStatus" method="post" class="status-form"><input type="hidden" name="id" value="@Model.Id" /><div asp-validation-summary="All" class="validation-summary" role="alert"></div><div class="field"><label for="Status">Update status</label><select id="Status" name="Status" required>@foreach (var status in ReportOptions.Statuses) { <option value="@status" selected="@(Model.Status == status)">@ReportOptions.StatusLabel(status)</option> }</select></div><button class="button button-full" type="submit">Save status <span aria-hidden="true">→</span></button><p class="field-hint">The student will see this status on their report.</p></form>
+        }
+        else { <p class="fine-print">The maintenance team updates this status. Check back here to follow your report.</p> }
+    </aside>
+</div>

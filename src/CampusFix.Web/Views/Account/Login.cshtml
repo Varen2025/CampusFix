@@ -1,0 +1,22 @@
+@model LoginRequest
+@{
+    ViewData["Title"] = "Sign in";
+}
+<section class="auth-layout">
+    <div class="auth-intro"><p class="eyebrow">WELCOME BACK</p><h1>Good spaces<br />take <em>teamwork.</em></h1><p>Sign in to follow your reports or manage the maintenance queue.</p><a class="text-link" asp-controller="Home" asp-action="Index">← Back to CampusFix</a></div>
+    <div class="panel auth-panel">
+        <span class="eyebrow">YOUR CAMPUSFIX ACCOUNT</span><h2>Sign in</h2><p class="muted">Students and staff sign in here.</p>
+        @if (ViewData["SessionExpired"] is true)
+        {
+            <div class="notice" role="status">Your session has expired. Please sign in again.</div>
+        }
+        <form asp-action="Login" method="post">
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+            <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+            <div class="field"><label asp-for="Email">Email address</label><input asp-for="Email" type="email" autocomplete="username" required maxlength="254" /></div>
+            <div class="field"><label asp-for="Password">Password</label><input asp-for="Password" type="password" autocomplete="current-password" required maxlength="128" /></div>
+            <button type="submit" class="button button-full">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch">New here? <a asp-action="Register">Create a student account</a></p>
+    </div>
+</section>
